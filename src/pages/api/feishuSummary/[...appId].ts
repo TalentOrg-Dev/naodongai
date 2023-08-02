@@ -1,7 +1,7 @@
 import * as lark from '@larksuiteoapi/node-sdk';
 import { AIResource, App, Message, Prisma, PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@prisma/client/runtime/library';
-import { ChatCommands, OpenAITemperature,ServiceCard } from 'constant';
+import { ChatCommands, OpenAITemperature, ServiceCard, chatModeHistory } from 'constant';
 import { NextApiRequest, NextApiResponse } from 'next';
 import MessageQueue from 'pages/api/queues/messages';
 import { ReceiveMessageData, ReceiveMessageEvent } from 'types/feishu';
@@ -89,30 +89,12 @@ const handleFeishuMessage = async (
     res.end('ok');
     return;
   }
-  //根据群组id+用户id读取聊天会话信息
-  let chatSession = await prisma.chatSession.findFirst({
-    where: {
-      groupId: event.data.message.chat_id,
-      sender: event.data.sender.sender_id?.open_id
-    }
-  });
-  //得到聊天会话对话样式
-  if (chatSession && chatSession.temperature) {
-    let temperature = chatSession.temperature;
-    OpenAITemperature.forEach((item) => {
-      if (item.key === temperature) {
-        event.data.temperature = Number(item.value);
-      }
-    })
-
-  }
-
   receivedMessage = await prisma.receivedMessage.create({
     data: {
       id: event.data.message.message_id,
       appId: app.id,
       data: event.data,
-      type: 'FEISHU',
+      type: 'FEISHUSUMMARY',
       eventName: event.name,
       processing: true,
       createdAt: new Date(Number(event.data.message.create_time))
@@ -125,21 +107,6 @@ const handleFeishuMessage = async (
 
 
   let history: Message[] = [];
-  if (event.data.message.root_id && event.data.message.root_id != event.data.message.message_id) {
-    history = await prisma.message.findMany({
-      where: {
-        conversationId: event.data.message.root_id,
-        isAIAnswer: true,
-      },
-      orderBy: [
-        {
-          createdAt: 'desc'
-        }
-      ],
-      take: 50
-    });
-  }
-
   // Send to queue.
   await MessageQueue.enqueue(
     { receivedMessage: receivedMessage, history: history, app: app, sensitiveWords: matched }, // job to be enqueued
@@ -151,75 +118,26 @@ const handleFeishuMessage = async (
   res.end('ok');
 };
 /**
- * 根据内容判断是否为帮助模块，如果是则发送卡片消息
- * @param client 飞书客户端信息
+ * 根据内容判断是否为摘要模块
  * @param event 消息内容
- * @param app 应用信息
  * @param res 
- * @returns 返回状态：true：代表是帮助，false:代表非帮助
+ * @returns 返回状态：true：代表是摘要，false:代表非摘要
  */
-const chatSessionCard = async (
-  client: lark.Client,
+const judgingSummary = async (
   event: ReceiveMessageEvent,
-  app: App & { aiResource: AIResource },
   res: NextApiResponse
 ) => {
-  if (app.config === null) {
-    throw Error('App is not configed');
-  }
-
-  const config = app.config as Prisma.JsonObject;
-  let helpStatus = false;
+  let summaryStatus = false;
   let text = JSON.parse(event.data.message.content).text;
-  // if (text.indexOf("@_user") != -1) {
-  //   text = text.substr(8).trim();
-  // }
   if (/@_user_\d/.test(text)) {
     text = text.replace(/@_user_\d/, '').trim();
   }
   text=text.toLowerCase();
-  //判断是否为帮助
-  if (text === '/help' || text === '帮助') {
-    let openId = event.data.sender.sender_id?.open_id || "";
-    //根据群组和用户id读取聊天话题
-    let chatSession = await prisma.chatSession.findUnique({
-      where: {
-        groupId_sender_appId: {
-          groupId: event.data.message.chat_id,
-          sender: openId,
-          appId: app.id
-        }
-      }
-    });
-    let defaultSelectMenu = "";
-    //读取对话样式，如果没有则显示默认值
-    if (chatSession && chatSession.temperature) {
-
-      let temperature = chatSession.temperature;
-      OpenAITemperature.forEach((item) => {
-        if (item.key === temperature) {
-          defaultSelectMenu = item.text.content;
-        }
-      })
-    } else {
-      defaultSelectMenu = OpenAITemperature[0].text.content;
-    }
-    let message=JSON.stringify(ServiceCard);
-    message=message.replaceAll("${defaultSelectMenu}",defaultSelectMenu);
-    //飞书发送卡片消息
-    const result = await client.im.message.create({
-      params: {
-        receive_id_type: "chat_id"
-      },
-      data: {
-        receive_id: event.data.message.chat_id,
-        content: message,
-        msg_type: "interactive"
-      }
-    });
-    helpStatus = true;
+  //判断是否为摘要
+  if (chatModeHistory.name.indexOf(text) != -1) {
+    summaryStatus = true;
   }
-  return helpStatus;
+  return summaryStatus;
 }
 /** 
  * 判断是否在群组@机器人
@@ -294,9 +212,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       const event = (await dispatcher.invoke(data)) as ReceiveMessageEvent;
 
       if (event.name === 'im.message.receive_v1' && judgingRobots(event, app)) {
-        //判断是不是帮助模块。是则发送卡片消息，不是则继续往下调用
-        let helpStatus = await chatSessionCard(client, event, app, res);
-        if (!helpStatus) {
+        //判断是不是摘要模块。是则发送卡片消息，不是则继续往下调用
+        let summaryStatus = await judgingSummary(event, res);
+        if (summaryStatus) {
           handleFeishuMessage(client, event, app, res);
         } else {
           res.end('ok');

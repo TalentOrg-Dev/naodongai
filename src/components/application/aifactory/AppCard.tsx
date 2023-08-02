@@ -134,7 +134,7 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
   };
 
   const appConfigInitial = (app: App) => {
-    if (app.appType === 'FEISHU') {
+    if (app.appType === 'FEISHU' || app.appType==='FEISHUSUMMARY') {
       const config = app.config as FeishuAppConfig;
       return {
         // ...app,
@@ -277,6 +277,16 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
             sx={{ objectFit: 'contain' }}
           />
         )}
+        {app.appType === 'FEISHUSUMMARY' && (
+          <CardMedia
+            component="img"
+            image="/assets/images/logos/feishusummary.png"
+            alt="DingTalk"
+            height={124}
+            width={124}
+            sx={{ objectFit: 'contain' }}
+          />
+        )}
 
         <CardActions disableSpacing>
           <IconButton aria-label="edit" onClick={() => handleConfigOpen()}>
@@ -317,9 +327,9 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
                 {app.appType === 'FEISHU' && <Tab label="飞书" value="feishu" />}
                 {app.appType === 'WEWORK' && <Tab label="企业微信" value="wework" />}
                 {app.appType === 'DINGTALK' && <Tab label="钉钉" value="dingtalk" />}
+                {app.appType === 'FEISHUSUMMARY' && <Tab label="飞书摘要" value="feishusummary" />}
                 <Tab label="AI" value="ai" />
                 <Tab label="资源" value="resource" />
-                {app.appType === 'FEISHU' && <Tab label="消息卡片" value="card" />}
               </TabList>
             </Box>
             <TabPanel value="feishu">
@@ -468,6 +478,60 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
                 />
               </Stack>
             </TabPanel>
+            <TabPanel value="feishusummary">
+              <Stack>
+                <TextField
+                  margin="dense"
+                  id="config.appId"
+                  name="config.appId"
+                  label="AppId"
+                  fullWidth
+                  variant="standard"
+                  value={formik.values.config.appId}
+                  onChange={formik.handleChange}
+                  error={formik.touched.config?.appId && Boolean(formik.errors.config?.appId)}
+                  helperText={formik.touched.config?.appId && formik.errors.config?.appId}
+                />
+                <TextField
+                  margin="dense"
+                  id="config.appSecret"
+                  name="config.appSecret"
+                  label="AppSecret"
+                  fullWidth
+                  variant="standard"
+                  value={formik.values.config.appSecret}
+                  onChange={formik.handleChange}
+                  error={formik.touched.config?.appSecret && Boolean(formik.errors.config?.appSecret)}
+                  helperText={formik.touched.config?.appSecret && formik.errors.config?.appSecret}
+                />
+                <TextField
+                  margin="dense"
+                  id="config.encryptKey"
+                  name="config.encryptKey"
+                  label="EncryptKey"
+                  fullWidth
+                  variant="standard"
+                  value={formik.values.config.encryptKey}
+                  onChange={formik.handleChange}
+                  error={formik.touched.config?.encryptKey && Boolean(formik.errors.config?.encryptKey)}
+                  helperText={formik.touched.config?.encryptKey && formik.errors.config?.encryptKey}
+                />
+                <TextField
+                  margin="dense"
+                  variant="standard"
+                  id="config.verificationToken"
+                  label="VerificationToken"
+                  name="config.verificationToken"
+                  fullWidth
+                  value={formik.values.config.verificationToken}
+                  onChange={formik.handleChange}
+                  error={formik.touched.config?.verificationToken && Boolean(formik.errors.config?.verificationToken)}
+                  helperText={formik.touched.config?.verificationToken && formik.errors.config?.verificationToken}
+                />
+              </Stack>
+            </TabPanel>
+
+
             <TabPanel value="ai">
               <Stack>
                 <TextField
@@ -553,25 +617,6 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
                 </TextField>
               </Stack>
             </TabPanel>
-            {app.appType === 'FEISHU' && (
-              <TabPanel value="card">
-                <Stack>
-                  <TextField
-                    margin="dense"
-                    id="config.cardId"
-                    name="config.cardId"
-                    label="卡片ID"
-                    fullWidth
-                    variant="standard"
-                    value={formik.values.config.cardId}
-                    onChange={formik.handleChange}
-                    error={formik.touched.config?.cardId && Boolean(formik.errors.config?.cardId)}
-                    helperText={formik.touched.config?.cardId && formik.errors.config?.cardId}
-                  />
-
-                </Stack>
-              </TabPanel>
-            )}
           </TabContext>
         </DialogContent>
         <DialogActions>
@@ -607,6 +652,20 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
                 variant="standard"
                 sx={{ minWidth: 500 }}
                 value={`${window.location.origin}/api/feishuCard/${app.id}`}
+              />
+            </>
+          )}
+          {app.appType === 'FEISHUSUMMARY' && (
+            <>
+              <DialogContentText>飞书摘要URL配置</DialogContentText>
+              <TextField
+                margin="dense"
+                id="callbackurl"
+                label="事件接收地址"
+                fullWidth
+                variant="standard"
+                sx={{ minWidth: 500 }}
+                value={`${window.location.origin}/api/feishuSummary/${app.id}`}
               />
             </>
           )}
@@ -696,7 +755,7 @@ export default function AppCard({ app }: { app: App & { aiResource: AIResource |
         </DialogContent>
         <DialogActions>
           <Button onClick={handleUpdateClose}>取消</Button>
-          <LoadingButton loading={formik.isSubmitting}  onClick={formik.submitForm}>修改</LoadingButton>
+          <LoadingButton loading={formik.isSubmitting} onClick={formik.submitForm}>修改</LoadingButton>
         </DialogActions>
       </Dialog>
     </>

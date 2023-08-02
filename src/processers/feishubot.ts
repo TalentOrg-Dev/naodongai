@@ -164,6 +164,7 @@ const feishuMessageIsSummary = (receivedMessage: ReceivedMessage) => {
   if (/@_user_\d/.test(text)) {
     text = text.replace(/@_user_\d/, '').trim();
   }
+  text=text.toLowerCase();
   if (chatModeHistory.name.indexOf(text) != -1) {
     return true;
   }
@@ -318,17 +319,18 @@ export const processMessage = async ({ receivedMessage, history, app, sensitiveW
   let messages = [];
   let promptTokens = 0;
   //判断是否为摘要
-
-  if (!await feishuMessageIsSummary(receivedMessage)) {
+  if (receivedMessage.type === 'FEISHU') {
     //如果不为摘要则继续按照内容生成messages
-    const makeMessage = makeMessages({ receivedMessage, history, app, sensitiveWords }); 
+    const makeMessage = makeMessages({ receivedMessage, history, app, sensitiveWords });
     messages = makeMessage.messages;
     promptTokens = makeMessage.promptTokens;
 
-  } else {
+  } else if (receivedMessage.type === 'FEISHUSUMMARY' && await feishuMessageIsSummary(receivedMessage)) {
     const feishuHistory = await feishuHistoryMakeMessages(receivedMessage, accessToken);
     messages = feishuHistory.messages;
     promptTokens = feishuHistory.promptTokens;
+  } else {
+    return null;
   }
 
   const repliedMessageId = await trySendOrUpdateFeishuCard(accessToken, 'AI助理', '...', '回复中', null, receivedMessage.id, null);

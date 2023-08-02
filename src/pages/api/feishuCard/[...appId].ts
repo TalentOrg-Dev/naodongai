@@ -36,7 +36,7 @@ const chatSessionInsertToUpdate = async (
   let temperature = null;
   //根据客户操作value值读取json
   OpenAITemperature.forEach((item) => {
-    if (item.value === value) {
+    if (Number(item.value) === value) {
       temperature = item.key;
     }
   })

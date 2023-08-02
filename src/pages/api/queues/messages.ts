@@ -34,7 +34,7 @@ export default Queue(
           return new Response('ok');
         }
       }
-      if (messageQueueBody.receivedMessage.type === 'FEISHU') {
+      if (messageQueueBody.receivedMessage.type === 'FEISHU' || messageQueueBody.receivedMessage.type === 'FEISHUSUMMARY') {
         const result = await processFeishu(messageQueueBody);
         if (result) {
           return result;

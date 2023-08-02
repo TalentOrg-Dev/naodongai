@@ -269,7 +269,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   //   }
   // }
 
-  if (providerId && providerId !== 'github'){
+  if (providerId && providerId !== 'github' && providerId !== 'email'){
     const p = await prisma.provider.findUniqueOrThrow({where: {id: providerId}});
     if (p.type === 'FEISHU') {
       options.providers.push(
