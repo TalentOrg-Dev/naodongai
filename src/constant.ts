@@ -92,19 +92,28 @@ export const chatTemplate = {
 //AI 飞书模块可选择temperature值
 export const OpenAITemperature = [
   {
-    key: "k1",
-    text: "更有创造力",
-    value: 1.0
+    "key": "k1",
+    "text": {
+      "tag":"plain_text",
+      "content":"更有创造力"
+    },
+    "value": "1.0"
   },
   {
-    key: "k2",
-    text: "更平衡",
-    value: 0.7
+    "key": "k2",
+    "text": {
+      "tag":"plain_text",
+      "content":"更平衡"
+    },
+    "value": "0.7"
   },
   {
-    key: "k3",
-    text: "更精准",
-    value: 0.1
+    "key": "k3",
+    "text": {
+      "tag":"plain_text",
+      "content":"更精准"
+    },
+    "value": "0.1"
   }
 ]
 export const chatModeHistory = {
@@ -112,4 +121,91 @@ export const chatModeHistory = {
   message: '根据以上会话记录，希望你能够对这些记录进行摘要。要求简明扼要，以包含列表的大纲形式输出。',
   during: 7 * 24 * 60 * 60,
   size: 100
+}
+/**
+ * 服务卡片默认json
+ */
+export const ServiceCard={
+  "config": {
+    "wide_screen_mode": true
+  },
+  "elements": [
+    {
+      "tag": "markdown",
+      "content": "我是你的AI小助手，可以帮助你更好的完成你的工作。我们一起加油吧"
+    },
+    {
+      "tag": "div",
+      "text": {
+        "tag": "lark_md",
+        "content": "选择对话样式（Bing Chat 同款）"
+      },
+      "extra": {
+        "tag": "select_static",
+        "placeholder": {
+          "tag": "plain_text",
+          "content": "${defaultSelectMenu}"
+        },
+        "value": {
+          "key": "${defaultSelectMenu}"
+        },
+        "options": OpenAITemperature
+      }
+    },
+    {
+      "tag": "hr"
+    },
+    {
+      "tag": "div",
+      "text": {
+        "tag": "lark_md",
+        "content": "如何多轮对话？"
+      },
+      "extra": {
+        "tag": "button",
+        "text": {
+          "tag": "lark_md",
+          "content": "查看详情"
+        },
+        "type": "primary",
+        "multi_url": {
+          "url": "https://www.chilunyc.com/",
+          "pc_url": "",
+          "android_url": "",
+          "ios_url": ""
+        }
+      }
+    },
+    {
+      "tag": "hr"
+    },
+    {
+      "tag": "div",
+      "text": {
+        "tag": "lark_md",
+        "content": "由任何需求或者Bug，欢迎来提"
+      },
+      "extra": {
+        "tag": "button",
+        "text": {
+          "tag": "lark_md",
+          "content": "···"
+        },
+        "type": "primary",
+        "multi_url": {
+          "url": "https://www.feishu.cn",
+          "android_url": "",
+          "ios_url": "",
+          "pc_url": ""
+        }
+      }
+    }
+  ],
+  "header": {
+    "template": "blue",
+    "title": {
+      "content": "这里是帮助中心",
+      "tag": "plain_text"
+    }
+  }
 }

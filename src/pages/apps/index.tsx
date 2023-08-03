@@ -156,6 +156,9 @@ const MyApps = () => {
             <MenuItem value="WEWORK">
               企业微信机器人
             </MenuItem>
+            <MenuItem value="FEISHUSUMMARY">
+              飞书摘要机器人
+            </MenuItem>
             </TextField>
           <TextField
             autoFocus
